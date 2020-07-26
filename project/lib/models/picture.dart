@@ -18,7 +18,7 @@ class Picture {
     return Picture(
       date: json["date"],
       title: json["title"],
-      imageUrl: json["media_type"] == 'image' ? json["url"] : "invalid_media",
+      imageUrl: json["url"],
       description: json["explanation"],
       mediaType: json["media_type"],
     );
@@ -44,23 +44,6 @@ Future<List<Picture>> getPictures() async {
       throw Exception('Failed to load picture');
     }
   }
-
-  // pictures.add(new Picture(
-  //     name: "Mars",
-  //     imageUrl: "https://solarsystem.nasa.gov/internal_resources/3841/",
-  //     photographer: "Levi"));
-
-  // pictures.add(new Picture(
-  //     name: "Jupiter",
-  //     imageUrl:
-  //         "https://www.nasa.gov/sites/default/files/thumbnails/image/hs-2016-24-a-print-new.jpg",
-  //     photographer: "Sharon"));
-
-  // pictures.add(new Picture(
-  //     name: "Earth",
-  //     imageUrl:
-  //         "https://www.nasa.gov/centers/goddard/images/content/638831main_globe_east_2048.jpg",
-  //     photographer: "Levi"));
 
   return pictures;
 }
