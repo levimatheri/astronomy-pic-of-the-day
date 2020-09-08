@@ -4,13 +4,17 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:downloads_path_provider/downloads_path_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path/path.dart' as path;
+import 'package:wallpaper_manager/wallpaper_manager.dart';
 
+import 'helpers/helper.dart';
 import 'models/picture.dart';
 
 class PictureScreen extends StatefulWidget {
@@ -65,6 +69,7 @@ class _PictureScreenState extends State<PictureScreen> {
             },
             onSelected: (value) async {
               switch (value.title) {
+                // DOWNLOAD FILE
                 case 'Download': {
                   final DownloadAlertDialog alertDialog = DownloadAlertDialog(progress: progress);
                   showDialog<void>(
@@ -80,56 +85,81 @@ class _PictureScreenState extends State<PictureScreen> {
                   );
                 }
                 break;
+                // SET HOME SCREEN WALLPAPER
+                case "Home screen": {
+                  int location = WallpaperManager.HOME_SCREEN;
+
+                }
+                break;
+                // SET LOCK SCREEN WALLPAPER
+                case "Lock screen": {
+                  int location = WallpaperManager.LOCK_SCREEN;
+                  var result = await setWallpaper(location);
+                  final snackBar = SnackBar(
+                    content: Text(result),
+                  );
+                  Scaffold.of(context).showSnackBar(snackBar);
+                }
+                break;
+                // SET HOME & LOCK SCREEN WALLPAPER
+                case "Home & lock screen": {
+                  int location = WallpaperManager.BOTH_SCREENS;
+                  var result = await setWallpaper(location);
+                  showToast(context, result);
+                }
+                break;
               }
             },
           )
         ],
       ),
-      body: this.widget.picture.mediaType == "image" ? 
+      body: Builder(
+        builder: (context) => this.widget.picture.mediaType == "image" ?
         Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(this.widget.picture.imageUrl),
-              fit: BoxFit.cover
-            ),
-          )
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                  image: NetworkImage(this.widget.picture.imageUrl),
+                  fit: BoxFit.cover
+              ),
+            )
         ) :
         Container (
-          child: Align(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 20.0),
-                      child: Text("Format is not supported :(", style: TextStyle(fontSize: 18.0),),
-                    )
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    RaisedButton(
-                      onPressed: () async {
-                        await _launchUrl(this.widget.picture.imageUrl);
-                      },
-                      child: Text("Open in browser"),
-                      color: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: new BorderRadius.circular(18.0),
-                        side: BorderSide(color: Colors.black),
+            child: Align(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 20.0),
+                        child: Text("Format is not supported :(", style: TextStyle(fontSize: 18.0),),
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      RaisedButton(
+                        onPressed: () async {
+                          await _launchUrl(this.widget.picture.imageUrl);
+                        },
+                        child: Text("Open in browser"),
+                        color: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(18.0),
+                          side: BorderSide(color: Colors.black),
+                        ),
+                        padding: EdgeInsets.all(20.0),
                       ),
-                      padding: EdgeInsets.all(20.0),
-                    ),
-                  ],
-                )
-              ],
-            ),
-          )
-        )
+                    ],
+                  )
+                ],
+              ),
+            )
+        ),
+      )
     );
   }
 
@@ -152,6 +182,19 @@ class _PictureScreenState extends State<PictureScreen> {
     return permission == PermissionStatus.granted;
   }
 
+  showToast(BuildContext context, String message) {
+    final scaffold = Scaffold.of(context);
+    scaffold.showSnackBar(
+        SnackBar(
+          content: Text(message),
+        )
+    );
+  }
+
+  generatePictureView() {
+
+  }
+
   download(String pictureName, String pictureUrl, Function onReceiveProgress) async {
     // download
     final dir = await _getDownloadDirectory();
@@ -163,6 +206,17 @@ class _PictureScreenState extends State<PictureScreen> {
     } else {
 
     }
+  }
+
+   Future<String> setWallpaper(int location) async {
+    String result;
+    try {
+      var file = await DefaultCacheManager().getSingleFile(this.widget.picture.imageUrl);
+      result = await WallpaperManager.setWallpaperFromFile(file.path, location);
+    } on PlatformException {
+      result = 'Failed to obtain wallpaper.';
+    }
+    return result;
   }
 
   _startDownload(String savePath, String fileUrl, Function onReceiveProgress) async {
@@ -256,7 +310,7 @@ class DownloadAlertDialog extends StatefulWidget {
 
   DownloadAlertDialog({@required this.progress});
 
-  _DownloadAlertDialogState dialogState = _DownloadAlertDialogState();
+  final _DownloadAlertDialogState dialogState = _DownloadAlertDialogState();
 
   @override
   _DownloadAlertDialogState createState() => dialogState;

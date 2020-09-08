@@ -15,12 +15,13 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomePage(title: 'Recent Pictures'),
+      home: HomePage(title: 'Recent Pictures from NASA'),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
+
   HomePage({Key key, this.title}) : super(key: key);
 
   final String title;
@@ -30,6 +31,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   Future<List<Picture>> pictures;
 
   // @override
@@ -131,8 +133,13 @@ class _HomePageState extends State<HomePage> {
                     }),
               );
             } else {
-              return Container(
-                child: CircularProgressIndicator(),
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(
+                    child: CircularProgressIndicator(),
+                  )
+                ]
               );
             }
           }),
