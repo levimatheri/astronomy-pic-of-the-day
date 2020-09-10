@@ -3,7 +3,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=flutter,dart,android,androidstudio,objective-c,swift
 
 ## Project specific ##
-app_settings.json
+**/app_settings.json
 
 ### Android ###
 # Built application files
