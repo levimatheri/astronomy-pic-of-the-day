@@ -24,7 +24,6 @@ class PictureScreen extends StatefulWidget {
 
   @override
   _PictureScreenState createState() => _PictureScreenState();
-
 }
 
 class _PictureScreenState extends State<PictureScreen> {
@@ -39,92 +38,90 @@ class _PictureScreenState extends State<PictureScreen> {
     final iOS = IOSInitializationSettings();
     final initSettings = InitializationSettings(android, iOS);
 
-    flutterLocalNotificationsPlugin.initialize(
-        initSettings,
-        onSelectNotification: _onSelectNotification
-    );
+    flutterLocalNotificationsPlugin.initialize(initSettings,
+        onSelectNotification: _onSelectNotification);
   }
 
   String progress = "-";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(this.widget.picture.title),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.info),
-            onPressed: () async {
-              await _launchUrl("https://apod.nasa.gov/apod/ap${this.widget.picture.date.substring(2).replaceAll('-', '')}.html");
-            }
-          ),
-          PopupMenuButton<Choice>(
-            itemBuilder: (BuildContext context) {
-              return choices.map((choice) {
-                return PopupMenuItem<Choice>(
-                  value: choice,
-                  child: Text(choice.title),
-                );
-              }).toList();
-            },
-            onSelected: (value) async {
-              switch (value.title) {
-                // DOWNLOAD FILE
-                case 'Download': {
-                  final DownloadAlertDialog alertDialog = DownloadAlertDialog(progress: progress);
-                  showDialog<void>(
-                      context: context,
-                      builder: (_) {
-                        return alertDialog;
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(56),
+        child: Builder(builder: (context) {
+          return AppBar(
+            title: Text(this.widget.picture.title),
+            actions: <Widget>[
+              IconButton(
+                  icon: Icon(Icons.info),
+                  onPressed: () async {
+                    await _launchUrl(
+                        "https://apod.nasa.gov/apod/ap${this.widget.picture.date.substring(2).replaceAll('-', '')}.html");
+                  }),
+              this.widget.picture.mediaType == "image" ? PopupMenuButton<Choice>(
+                itemBuilder: (BuildContext context) {
+                  return choices.map((choice) {
+                    return PopupMenuItem<Choice>(
+                      value: choice,
+                      child: Text(choice.title),
+                    );
+                  }).toList();
+                },
+                onSelected: (value) async {
+                  switch (value.title) {
+                    // DOWNLOAD FILE
+                    case 'Download':
+                      {
+                        final DownloadAlertDialog alertDialog =
+                            DownloadAlertDialog(progress: progress);
+                        showDialog<void>(
+                            context: context,
+                            builder: (_) {
+                              return alertDialog;
+                        });
+                        download(
+                            path.basename(this.widget.picture.imageUrl),
+                            this.widget.picture.imageUrl,
+                            alertDialog.onReceiveProgress);
                       }
-                  );
-                  download(
-                      path.basename(this.widget.picture.imageUrl),
-                      this.widget.picture.imageUrl,
-                      alertDialog.onReceiveProgress
-                  );
-                }
-                break;
-                // SET HOME SCREEN WALLPAPER
-                case "Home screen": {
-                  int location = WallpaperManager.HOME_SCREEN;
-
-                }
-                break;
-                // SET LOCK SCREEN WALLPAPER
-                case "Lock screen": {
-                  int location = WallpaperManager.LOCK_SCREEN;
-                  var result = await setWallpaper(location);
-                  final snackBar = SnackBar(
-                    content: Text(result),
-                  );
-                  Scaffold.of(context).showSnackBar(snackBar);
-                }
-                break;
-                // SET HOME & LOCK SCREEN WALLPAPER
-                case "Home & lock screen": {
-                  int location = WallpaperManager.BOTH_SCREENS;
-                  var result = await setWallpaper(location);
-                  showToast(context, result);
-                }
-                break;
-              }
-            },
-          )
-        ],
+                      break;
+                    // SET HOME SCREEN WALLPAPER
+                    case "Home screen":
+                      {
+                        await setWallpaper(context, WallpaperManager.HOME_SCREEN,
+                            "Home screen set successfully!");
+                      }
+                      break;
+                    // SET LOCK SCREEN WALLPAPER
+                    case "Lock screen":
+                      {
+                        await setWallpaper(context, WallpaperManager.LOCK_SCREEN,
+                            "Lock screen set successfully!");
+                      }
+                      break;
+                    // SET HOME & LOCK SCREEN WALLPAPER
+                    case "Home & lock screen":
+                      {
+                        await setWallpaper(context, WallpaperManager.BOTH_SCREENS,
+                            "Home and lock screens set successfully!");
+                      }
+                      break;
+                  }
+                },
+              ) : Container()
+            ],
+          );
+        }),
       ),
-      body: Builder(
-        builder: (context) => this.widget.picture.mediaType == "image" ?
-        Container(
-            decoration: BoxDecoration(
+      body: this.widget.picture.mediaType == "image"
+          ? Container(
+              decoration: BoxDecoration(
               image: DecorationImage(
                   image: NetworkImage(this.widget.picture.imageUrl),
-                  fit: BoxFit.cover
-              ),
-            )
-        ) :
-        Container (
-            child: Align(
+                  fit: BoxFit.cover),
+            ))
+          : Container(
+              child: Align(
               alignment: Alignment.center,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +131,10 @@ class _PictureScreenState extends State<PictureScreen> {
                     children: <Widget>[
                       Padding(
                         padding: EdgeInsets.only(bottom: 20.0),
-                        child: Text("Format is not supported :(", style: TextStyle(fontSize: 18.0),),
+                        child: Text(
+                          "Format is not supported :(",
+                          style: TextStyle(fontSize: 18.0),
+                        ),
                       )
                     ],
                   ),
@@ -157,12 +157,42 @@ class _PictureScreenState extends State<PictureScreen> {
                   )
                 ],
               ),
-            )
-        ),
-      )
+            )),
     );
   }
 
+  Future<void> setWallpaper(
+      BuildContext context, int location, String successMessage) async {
+    String result;
+    try {
+      var file = await DefaultCacheManager()
+          .getSingleFile(this.widget.picture.imageUrl);
+      result = await WallpaperManager.setWallpaperFromFile(file.path, location);
+      if (result == 'Wallpaper set') {
+        Helper.showToast(context, successMessage);
+      } else {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text('Error'),
+            content: Text('$result'),
+          ),
+        );
+      }
+    } on PlatformException {
+      result = 'Failed to obtain wallpaper.';
+    }
+    return result;
+  }
+
+//  showToast(BuildContext context, String message) {
+//    final scaffold = Scaffold.of(context);
+//    scaffold.showSnackBar(SnackBar(
+//      content: Text(message),
+//    ));
+//  }
+
+  // get device default download directory
   Future<Directory> _getDownloadDirectory() async {
     if (Platform.isAndroid) {
       return await DownloadsPathProvider.downloadsDirectory;
@@ -172,30 +202,21 @@ class _PictureScreenState extends State<PictureScreen> {
   }
 
   Future<bool> _requestPermissions() async {
-    var permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.storage);
+    // check for permission to access to storage. If not granted, request it
+    var permission = await PermissionHandler()
+        .checkPermissionStatus(PermissionGroup.storage);
 
     if (permission != PermissionStatus.granted) {
       await PermissionHandler().requestPermissions([PermissionGroup.storage]);
-      permission = await PermissionHandler().checkPermissionStatus(PermissionGroup.storage);
+      permission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.storage);
     }
 
     return permission == PermissionStatus.granted;
   }
 
-  showToast(BuildContext context, String message) {
-    final scaffold = Scaffold.of(context);
-    scaffold.showSnackBar(
-        SnackBar(
-          content: Text(message),
-        )
-    );
-  }
-
-  generatePictureView() {
-
-  }
-
-  download(String pictureName, String pictureUrl, Function onReceiveProgress) async {
+  download(
+      String pictureName, String pictureUrl, Function onReceiveProgress) async {
     // download
     final dir = await _getDownloadDirectory();
     final isPermissionStatusGranted = await _requestPermissions();
@@ -203,23 +224,11 @@ class _PictureScreenState extends State<PictureScreen> {
     if (isPermissionStatusGranted) {
       final savePath = path.join(dir.path, pictureName);
       await _startDownload(savePath, pictureUrl, onReceiveProgress);
-    } else {
-
-    }
+    } else {}
   }
 
-   Future<String> setWallpaper(int location) async {
-    String result;
-    try {
-      var file = await DefaultCacheManager().getSingleFile(this.widget.picture.imageUrl);
-      result = await WallpaperManager.setWallpaperFromFile(file.path, location);
-    } on PlatformException {
-      result = 'Failed to obtain wallpaper.';
-    }
-    return result;
-  }
-
-  _startDownload(String savePath, String fileUrl, Function onReceiveProgress) async {
+  _startDownload(
+      String savePath, String fileUrl, Function onReceiveProgress) async {
     Map<String, dynamic> result = {
       'isSuccess': false,
       'filePath': null,
@@ -229,18 +238,16 @@ class _PictureScreenState extends State<PictureScreen> {
     final Dio _dio = new Dio();
 
     try {
-      final response = await _dio.download(
-          fileUrl,
-          savePath,
-          onReceiveProgress: onReceiveProgress
-      );
+      // download file from URL and update progress with onReceiveProgress callback
+      final response = await _dio.download(fileUrl, savePath,
+          onReceiveProgress: onReceiveProgress);
 
       result['isSuccess'] = response.statusCode == 200;
       result['filePath'] = savePath;
-     // result['fileName'] = fileName;
+      // result['fileName'] = fileName;
 
       if (result['isSuccess']) {
-        Navigator.pop(context);
+        Navigator.pop(context); // close progress dialog
       }
     } catch (ex) {
       result['error'] = ex.toString();
@@ -251,12 +258,8 @@ class _PictureScreenState extends State<PictureScreen> {
 
   _showNotification(Map<String, dynamic> downloadStatus) async {
     final android = AndroidNotificationDetails(
-      'channel id',
-      'channel name',
-      'channel description',
-      priority: Priority.High,
-      importance: Importance.Max
-    );
+        'channel id', 'channel name', 'channel description',
+        priority: Priority.High, importance: Importance.Max);
 
     final iOS = IOSNotificationDetails();
     final platform = NotificationDetails(android, iOS);
@@ -266,11 +269,11 @@ class _PictureScreenState extends State<PictureScreen> {
     await flutterLocalNotificationsPlugin.show(
         0,
         isSuccess ? 'Success' : 'Failure',
-        isSuccess ? 'Picture has been downloaded successfully!'
+        isSuccess
+            ? 'Picture has been downloaded successfully!'
             : 'There was an error while downloading the picture.',
         platform,
-        payload: json
-    );
+        payload: json);
   }
 
   Future<void> _onSelectNotification(String json) async {
@@ -321,7 +324,6 @@ class DownloadAlertDialog extends StatefulWidget {
 }
 
 class _DownloadAlertDialogState extends State<DownloadAlertDialog> {
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -332,7 +334,6 @@ class _DownloadAlertDialogState extends State<DownloadAlertDialog> {
             Text('Download progress'),
             Text(
               '${this.widget.progress}',
-              // style: Theme.of(context).textTheme.bodyText1,
             )
           ],
         ),
@@ -340,10 +341,12 @@ class _DownloadAlertDialogState extends State<DownloadAlertDialog> {
     );
   }
 
+  // update percentage progress
   void onReceiveProgress(int received, int total) {
     if (total != -1) {
       setState(() {
-        this.widget.progress = (received / total * 100).toStringAsFixed(0) + "%";
+        this.widget.progress =
+            (received / total * 100).toStringAsFixed(0) + "%";
       });
     }
   }

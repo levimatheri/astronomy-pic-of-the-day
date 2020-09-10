@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:project/models/picture.dart';
 import 'package:project/picture_screen.dart';
+import 'package:global_configuration/global_configuration.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // make sure ServicesBinding is initialized
+  await GlobalConfiguration().loadFromAsset("app_settings");
   runApp(MyApp());
 }
 
@@ -33,13 +36,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 
   Future<List<Picture>> pictures;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   pictures = getPictures();
-  //   print('pictures: $pictures');
-  // }
 
   @override
   Widget build(BuildContext context) {

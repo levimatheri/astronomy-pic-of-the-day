@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:global_configuration/global_configuration.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
@@ -29,13 +30,14 @@ Future<List<Picture>> getPictures() async {
   var pictures = new List<Picture>();
   final DateTime now = DateTime.now();
 
-  for (var days = 0; days < 6; days++) {
+  var config = new GlobalConfiguration();
+  for (var days = 0; days < config.get("days.before.count"); days++) {
     final DateFormat formatter = DateFormat('yyyy-MM-dd');
     final DateTime dateQuery = now.subtract(new Duration(days: days));
     final String dateQueryString = formatter.format(dateQuery);
 
     final response = await http.get(
-        "https://api.nasa.gov/planetary/apod?api_key=BsNpsY6zG0X1oer9iWXGGA4xHYgr8yF3ZesbK5jj&hd=true&date=$dateQueryString");
+        "${config.get("nasa.api.url")}?api_key=${config.get("nasa.api.key")}&hd=true&date=$dateQueryString");
 
     //print('response: ${response.body}');
     if (response.statusCode == 200) {
