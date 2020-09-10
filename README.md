@@ -13,9 +13,8 @@
 Flutter app for showing astronomy pic of the day using [NASA Open API](https://api.nasa.gov/). 
 Includes option to download and set home and/or lock screen wallpaper of the image.
 
-  Page Name | Image   
+Page Name<img width=200/> | Image <img width=500/>  
  :---: | :---: 
-<img width=200/>|<img width=500/>
 Main page | <img src="screenshots/Screenshot_20200909-205206.png" height= "600"/>
 Image View | <img src="screenshots/Screenshot_20200909-205223.png" height= "600"/>
 Image options | <img src="screenshots/Screenshot_20200909-205258.png" height= "600"/>
