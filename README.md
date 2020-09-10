@@ -14,6 +14,6 @@ Flutter app for showing astronomy pic of the day using [NASA Open API](https://a
 
   Page Name | Image   
  --- | --- 
-Main page | <img src="Screenshot_20200909-205206.png" height= "600"/>
-Image View | <img src="Screenshot_20200909-205223.png" height= "600"/>
-Image options | <img src="Screenshot_20200909-205258.png" height= "600"/>
+Main page | <img src="screenshots/Screenshot_20200909-205206.png" height= "600"/>
+Image View | <img src="screenshots/Screenshot_20200909-205223.png" height= "600"/>
+Image options | <img src="screenshots/Screenshot_20200909-205258.png" height= "600"/>
